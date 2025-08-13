@@ -70,12 +70,15 @@ def softmax_loss_vectorized(W, X, y, reg):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     N = X.shape[0] # number of samples
-    Y_hat = X @ W  # raw scores matrix
+    scores = X @ W  # raw scores matrix
+    scores -= scores.max(axis=1, keepdims=True) # numerically stable exponents
+    exp_scores = np.exp(scores)
+    exp_scores_row_sum = exp_scores.sum(axis=1, keepdims=True)
+    # exp_scores_row_sum = np.max(exp_scores_row_sum, 1e-12)
+    P = exp_scores / exp_scores_row_sum
 
-    P = np.exp(Y_hat - Y_hat.max())      # numerically stable exponents
-    P /= P.sum(axis=1, keepdims=True)    # row-wise probabilities (softmax)
-
-    loss = -np.log(P[range(N), y]).sum() # sum cross entropies as loss
+    p_correct = P[range(N), y]
+    loss = -np.log(np.clip(p_correct, 1e-12, 1.0)).sum()
     loss = loss / N + reg * np.sum(W**2) # average loss and regularize 
 
     P[range(N), y] -= 1                  # update P for gradient
