@@ -107,7 +107,7 @@ def svm_loss_vectorized(W, X, y, reg):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     dW = (margins > 0).astype(int)    # initial gradient with respect to Y_hat
-    dW[range(N), y] -= dW.sum(axis=1) # update gradient to include correct labels
+    dW[range(N), y] -= dW.sum(axis=1) # The correct gradient for correct labels is -(number of active incorrect labels, ie Mij > 1)
     dW = X.T @ dW / N + 2 * reg * W   # gradient with respect to W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
