@@ -170,6 +170,11 @@ class FullyConnectedNet(object):
 
     Learnable parameters are stored in the self.params dictionary and will be learned
     using the Solver class.
+
+    NOTE: Implement the network initialization, forward pass, and backward pass. 
+    Throughout this assignment, you will be implementing layers in `cs231n/layers.py`. 
+    You can re-use your implementations for `affine_forward`, `affine_backward`, `relu_forward`, `relu_backward`, and `softmax_loss` from before. 
+    For right now, don't worry about implementing dropout or batch/layer normalization yet, as you will add those features later.
     """
 
     def __init__(
@@ -222,6 +227,17 @@ class FullyConnectedNet(object):
         # beta2, etc. Scale parameters should be initialized to ones and shift     #
         # parameters should be initialized to zeros.                               #
         ############################################################################
+        layer_dims = [input_dim] + hidden_dims + [num_classes]
+
+        # Lets initialize the weights and biases of the layers
+        for i in range(1, len(layer_dims)):
+           weight_dims = (layer_dims[i - 1], layer_dims[i])
+           bias_dim = (layer_dims[i],)
+
+           # Store weights and baises in each layer in the params dictionary
+           self.params[f"W{i}"] = np.random.randn(*weight_dims) * weight_scale
+           self.params[f"b{i}"] = np.zeros(bias_dim, dtype=self.dtype)
+
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -293,6 +309,23 @@ class FullyConnectedNet(object):
         # layer, etc.                                                              #
         ############################################################################
 
+        # We are to do affine-relu forward for first L - 1 layers
+        # If L = 3, we will do affine-relu forward pass for the first 2 layers
+        # Store cache in caches to be used during backward pass
+        
+        caches = []
+        out = X 
+
+        for i in range(1, self.num_layers):
+           Wi, bi = self.params[f"W{i}"], self.params[f"b{i}"]
+           out, cache = affine_relu_forward(out, Wi, bi)
+           caches.append(cache)
+
+        # Finally we do affine forward for last layer to get logits(scores)
+        w_last, b_last = self.params[f"W{self.num_layers}"], self.params[f"b{self.num_layers}"]
+        scores, cache_last = affine_forward(out, w_last, b_last)
+
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -315,7 +348,26 @@ class FullyConnectedNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
+        # To get loss, we pass scores and y to the softmax_loss function
+        loss, dscores = softmax_loss(scores, y)
+        # Average the loss
 
+        # Let's add L2 regularization to the loss for all L layers
+        for i in range(1, self.num_layers + 1):
+           Wi = self.params[f"W{i}"]
+           loss += (0.5 * self.reg * np.sum( Wi * Wi))
+
+        # Let's start backpropagation to get gradient of loss wrt to biases abnd weight across all layers
+        dout, dw_last, db_last = affine_backward(dscores, cache_last)
+        grads[f"W{self.num_layers}"] = dw_last + self.reg * self.params[f"W{self.num_layers}"]
+        grads[f"b{self.num_layers}"] = db_last
+
+        for i in range(self.num_layers - 1, 0, -1):
+           dout, dWi, dbi = affine_relu_backward(dout, caches[i - 1])
+           Wi = self.params[f"W{i}"]
+           grads[f"W{i}"] = dWi + self.reg * Wi
+           grads[f"b{i}"] = dbi
+           
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
