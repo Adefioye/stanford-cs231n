@@ -24,6 +24,9 @@ Solutions for **CS231n** course assignments offered by Stanford University (Spri
 * [Q4](assignment1/features.ipynb): Higher Level Representations: Image Features
 * [Q5](assignment2/FullyConnectedNets.ipynb): Fully-connected Neural Network
 
+>TODO
+1. After watching videos on update rules. Revisit `FullyConnectedNets.ipynb`
+
 ### Assignment 2
 
 * [Q1](assignment2/BatchNormalization.ipynb): Batch Normalization
